@@ -239,23 +239,30 @@ function! ale#codefix#HandleLSPResponse(conn_id, response) abort
     if has_key(a:response, 'method')
     \ && a:response.method is# 'workspace/applyEdit'
     \ && has_key(a:response, 'params')
-        let l:params = a:response.params
+        let l:applied = v:false
 
-        let l:changes_map = ale#code_action#GetChanges(l:params.edit)
+        try
+            let l:params = a:response.params
 
-        if empty(l:changes_map)
-            return
-        endif
+            let l:changes_map = ale#code_action#GetChanges(l:params.edit)
 
-        let l:changes = ale#code_action#BuildChangesList(l:changes_map)
+            if empty(l:changes_map)
+                return
+            endif
 
-        call ale#code_action#HandleCodeAction(
-        \   {
-        \       'description': 'applyEdit',
-        \       'changes': l:changes,
-        \   },
-        \   {}
-        \)
+            let l:changes = ale#code_action#BuildChangesList(l:changes_map)
+
+            call ale#code_action#HandleCodeAction(
+            \   {
+            \       'description': 'applyEdit',
+            \       'changes': l:changes,
+            \   },
+            \   {}
+            \)
+            let l:applied = v:true
+        finally
+            call ale#lsp#Send(a:conn_id, [1, '', {'applied': l:applied}])
+        endtry
     elseif has_key(a:response, 'id')
     \&& has_key(s:codefix_map, a:response.id)
         let l:data = remove(s:codefix_map, a:response.id)
