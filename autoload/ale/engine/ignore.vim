@@ -43,7 +43,7 @@ endfunction
 
 " This function can be mocked in tests.
 function! ale#engine#ignore#GetLSPConfigNames() abort
-    return luaeval('require ''ale.util''.configured_lspconfig_servers()')
+    return v:lua.require'ale.util'.configured_lspconfig_servers()
 endfunction
 
 function! s:GetMappedLSPConfigNames() abort

@@ -322,8 +322,12 @@ function! ale#lsp#UpdateConfig(conn_id, buffer, config) abort
     endif
 
     let l:conn.config = a:config
-    let l:message = ale#lsp#message#DidChangeConfiguration(a:buffer, a:config)
 
+    if g:ale_use_neovim_lsp_api && !l:conn.is_tsserver
+        call v:lua.require'ale.lsp'.update_settings(l:conn.client_id, a:config)
+    endif
+
+    let l:message = ale#lsp#message#DidChangeConfiguration(a:buffer, a:config)
     call ale#lsp#Send(a:conn_id, l:message)
 
     return 1
@@ -537,7 +541,7 @@ function! ale#lsp#StartProgram(conn_id, executable, command) abort
         " Always call lsp.start, which will either create or re-use a
         " connection. We'll set `attach` to `false` so we can later use
         " our OpenDocument function to attach the buffer separately.
-        let l:client_id = luaeval('require("ale.lsp").start(_A)', {
+        let l:client_id = v:lua.require'ale.lsp'.start({
         \   'name': a:conn_id,
         \   'cmd': l:lsp_cmd,
         \   'root_dir': l:conn.root,
@@ -607,7 +611,7 @@ function! ale#lsp#ConnectToAddress(conn_id, address) abort
     if g:ale_use_neovim_lsp_api && !l:conn.is_tsserver
         let [l:host, l:port] = ale#lsp#SplitAddress(a:address)
 
-        let l:client_id = luaeval('require("ale.lsp").start(_A)', {
+        let l:client_id = v:lua.require'ale.lsp'.start({
         \   'name': a:conn_id,
         \   'host': l:host,
         \   'port': l:port,
@@ -707,7 +711,7 @@ function! ale#lsp#Send(conn_id, message) abort
     endif
 
     if g:ale_use_neovim_lsp_api && !l:conn.is_tsserver
-        return luaeval('require("ale.lsp").send_message(_A)', {
+        return v:lua.require'ale.lsp'.send_message({
         \   'client_id': l:conn.client_id,
         \   'is_notification': a:message[0] == 1 ? v:true : v:false,
         \   'method': a:message[1],
@@ -743,7 +747,7 @@ function! ale#lsp#OpenDocument(conn_id, buffer) abort
             let l:message = ale#lsp#tsserver_message#Open(a:buffer)
             call ale#lsp#Send(a:conn_id, l:message)
         elseif g:ale_use_neovim_lsp_api
-            call luaeval('require("ale.lsp").buf_attach(_A)', {
+            call v:lua.require'ale.lsp'.buf_attach({
             \    'bufnr': a:buffer,
             \    'client_id': l:conn.client_id,
             \})
@@ -778,7 +782,7 @@ function! ale#lsp#CloseDocument(buffer) abort
                 let l:message = ale#lsp#tsserver_message#Close(a:buffer)
                 call ale#lsp#Send(l:conn_id, l:message)
             elseif g:ale_use_neovim_lsp_api
-                call luaeval('require("ale.lsp").buf_detach(_A)', {
+                call v:lua.require'ale.lsp'.buf_detach({
                 \    'bufnr': a:buffer,
                 \    'client_id': l:conn.client_id,
                 \})

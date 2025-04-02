@@ -1,13 +1,6 @@
 local module = {}
 
 module.start = function(config)
-    -- Neovim's luaeval sometimes adds a Boolean key to table we need to remove.
-    if type(config.init_options) == "table"
-    and config.init_options[true] ~= nil
-    then
-        config.init_options[true] = nil
-    end
-
     -- If configuring LSP via a socket connection, then generate the cmd
     -- using vim.lsp.rpc.connect(), as defined in Neovim documentation.
     if config.host then
@@ -165,6 +158,17 @@ module.send_message = function(args)
         return request_id
     end
 
+    return 0
+end
+
+module.update_settings = function(client_id, settings)
+    local client = vim.lsp.get_client_by_id(client_id)
+
+    if client == nil then
+        return 0
+    end
+
+    client.settings = settings
     return 0
 end
 
