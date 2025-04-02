@@ -322,8 +322,15 @@ function! ale#lsp#UpdateConfig(conn_id, buffer, config) abort
     endif
 
     let l:conn.config = a:config
-    let l:message = ale#lsp#message#DidChangeConfiguration(a:buffer, a:config)
 
+    if g:ale_use_neovim_lsp_api && !l:conn.is_tsserver
+        call luaeval('require("ale.lsp").update_settings(_A)', {
+        \   'client_id': l:conn.client_id,
+        \   'settings': a:config,
+        \})
+    endif
+
+    let l:message = ale#lsp#message#DidChangeConfiguration(a:buffer, a:config)
     call ale#lsp#Send(a:conn_id, l:message)
 
     return 1

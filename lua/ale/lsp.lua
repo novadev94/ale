@@ -168,4 +168,15 @@ module.send_message = function(args)
     return 0
 end
 
+module.update_settings = function(args)
+    local client = vim.lsp.get_client_by_id(args.client_id)
+
+    if client == nil then
+        return 0
+    end
+
+    client.settings = args.settings
+    return 0
+end
+
 return module
